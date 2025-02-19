@@ -1,12 +1,14 @@
-import IUFOSighting from "../types/interfaces";
 import React, { useEffect, useState } from "react";
+import IUFOSighting from "../types/interfaces";
 
 interface ISightingsContext {
   sightings: IUFOSighting[];
+  setSightings: (sightingsIn: IUFOSighting[]) => void;
 }
 
 export const SightingsContext = React.createContext<ISightingsContext>({
   sightings: [],
+  setSightings: () => [],
 });
 
 export const SightingsProvider = ({
@@ -32,7 +34,7 @@ export const SightingsProvider = ({
   }, []);
 
   return (
-    <SightingsContext.Provider value={{ sightings }}>
+    <SightingsContext.Provider value={{ sightings, setSightings }}>
       {children}
     </SightingsContext.Provider>
   );

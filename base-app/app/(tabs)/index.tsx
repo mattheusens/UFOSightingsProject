@@ -12,9 +12,10 @@ import {
 import "leaflet/dist/leaflet.css";
 import L, { LatLngTuple } from "leaflet";
 import { View, Text, StyleSheet } from "react-native";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { Link } from "expo-router";
 import IUFOSighting from "../types/interfaces";
+import { SightingsContext } from "../contexts/SightingsContext";
 
 const position: LatLngTuple = [51.505, -0.09];
 
@@ -36,7 +37,7 @@ const LocationHandler = ({ addMarker }: LocationHandlerProps) => {
 };*/
 
 export default function Index() {
-  const [UFOSightings, SetUFOSightings] = useState<IUFOSighting[]>([]);
+  const { sightings } = useContext(SightingsContext);
 
   const iconX = L.icon({
     iconUrl: "https://www.clipartbest.com/cliparts/nTX/ojB/nTXojBzqc.png",
@@ -44,22 +45,11 @@ export default function Index() {
     popupAnchor: [-3, 0],
   });
 
-  useEffect(() => {
-    const fetchSightings = async () => {
-      let result = await fetch(
-        "https://sampleapis.assimilate.be/ufo/sightings"
-      );
-      let json: IUFOSighting[] = await result.json();
-      SetUFOSightings(json);
-    };
-    fetchSightings();
-  }, []);
-
   return (
     <MapContainer
       center={{ lat: 51.505, lng: -0.09 }}
-      zoom={13}
       scrollWheelZoom={true}
+      zoom={3}
       style={{
         width: "100%",
         height: "100%",
@@ -73,7 +63,7 @@ export default function Index() {
         // attribution='&copy; <a href="https://www.openstreretmap.org/copyright">OpenStreetMap</a> contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
-      {UFOSightings.map((item, index) => (
+      {sightings.map((item, index) => (
         <Marker
           key={index}
           position={[item.location.latitude, item.location.longitude]}

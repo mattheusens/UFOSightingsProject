@@ -1,13 +1,23 @@
-import { Text, View, StyleSheet, TextInput, FlatList } from "react-native";
+import {
+  Text,
+  View,
+  StyleSheet,
+  TextInput,
+  FlatList,
+  Button,
+  Pressable,
+} from "react-native";
 import IUFOSighting from "../types/interfaces";
+import { useContext, useState } from "react";
+import { SightingsContext } from "../contexts/SightingsContext";
 
 const head: string[] = [
-  "Witness's name:",
-  "Mail:",
-  "Location:",
+  "Witness's name",
+  "Mail",
+  "Location",
   "",
-  "Description:",
-  "Picture:",
+  "Description",
+  "Picture",
 ];
 const helpers: string[] = [
   "Enter witness's name",
@@ -40,7 +50,7 @@ const MakeInput = ({ index }: { index: number }) => {
     );
   return (
     <View>
-      <Text style={[styles.text, styles.margins]}>{head[index]}</Text>
+      <Text style={[styles.text, styles.margins]}>{head[index]}*:</Text>
       <TextInput
         secureTextEntry={false}
         placeholder={helpers[index]}
@@ -51,7 +61,13 @@ const MakeInput = ({ index }: { index: number }) => {
   );
 };
 
+const addNewSighting = (sightings: IUFOSighting[]) => {
+  console.log("hey");
+};
+
 export default function Add() {
+  const { sightings, setSightings } = useContext(SightingsContext);
+
   return (
     <View style={styles.container}>
       <FlatList
@@ -59,6 +75,7 @@ export default function Add() {
         renderItem={({ item, index }) => <MakeInput index={index} />}
         keyExtractor={(item, index) => keys[index]}
       />
+      <Pressable onPress={() => {}}>Add sighting</Pressable>
     </View>
   );
 }
