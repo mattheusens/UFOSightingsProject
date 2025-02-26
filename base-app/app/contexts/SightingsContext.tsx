@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import IUFOSighting from "../types/interfaces";
+import { IUFOSighting } from "../types/interfaces.js";
 
 interface ISightingsContext {
   sightings: IUFOSighting[];
@@ -10,6 +10,8 @@ export const SightingsContext = React.createContext<ISightingsContext>({
   sightings: [],
   setSightings: () => [],
 });
+
+export default SightingsContext;
 
 export const SightingsProvider = ({
   children,
@@ -26,7 +28,7 @@ export const SightingsProvider = ({
         );
         let data = await result.json();
         setSightings(data);
-      } catch (erro) {
+      } catch (error) {
         console.error("Kan API niet ophalen.");
       }
     };

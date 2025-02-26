@@ -1,9 +1,10 @@
 import { useLocalSearchParams } from "expo-router";
 import React from "react";
 import { View, Text, Image, StyleSheet } from "react-native";
-import IUFOSighting from "../types/interfaces";
-import { useContext } from "react";
+import { IUFOSighting } from "../types/interfaces";
+import { useContext, useEffect } from "react";
 import { SightingsContext } from "../contexts/SightingsContext";
+import { useNavigation } from "expo-router";
 
 const head: string[] = [
   "Witness's name:",
@@ -55,6 +56,11 @@ export default function listId() {
   const { sightings } = useContext(SightingsContext);
   const { id } = useLocalSearchParams();
   const index = Number(id);
+  const nav = useNavigation();
+
+  useEffect(() => {
+    nav.setOptions({ title: `UFO Sighting ${sightings[index].witnessName}` });
+  }, [index, nav]);
 
   if (isNaN(index) || index < 0 || index > sightings.length)
     return (

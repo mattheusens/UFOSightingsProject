@@ -1,5 +1,11 @@
 "use dom";
 
+import "leaflet/dist/leaflet.css";
+import L, { LatLngTuple } from "leaflet";
+import { View, Text, StyleSheet } from "react-native";
+import { useContext } from "react";
+import { SightingsContext } from "../contexts/SightingsContext";
+import { Link } from "expo-router";
 import {
   MapContainer,
   Marker,
@@ -9,17 +15,9 @@ import {
   useMap,
   useMapEvents,
 } from "react-leaflet";
-import "leaflet/dist/leaflet.css";
-import L, { LatLngTuple } from "leaflet";
-import { View, Text, StyleSheet } from "react-native";
-import { useState, useEffect, useContext } from "react";
-import { Link } from "expo-router";
-import IUFOSighting from "../types/interfaces";
-import { SightingsContext } from "../contexts/SightingsContext";
+import { LocationContext } from "../contexts/LocationContext";
 
-const position: LatLngTuple = [51.505, -0.09];
-
-/*interface LocationHandlerProps {
+interface LocationHandlerProps {
   addMarker: (lat: number, lng: number) => void;
 }
 
@@ -34,16 +32,21 @@ const LocationHandler = ({ addMarker }: LocationHandlerProps) => {
   });
 
   return null;
-};*/
+};
 
 export default function Index() {
   const { sightings } = useContext(SightingsContext);
+  const { setLocation } = useContext(LocationContext);
 
   const iconX = L.icon({
-    iconUrl: "https://www.clipartbest.com/cliparts/nTX/ojB/nTXojBzqc.png",
+    iconUrl: "http://www.clipartbest.com/cliparts/nTX/ojB/nTXojBzqc.png",
     iconSize: [48, 48],
     popupAnchor: [-3, 0],
   });
+
+  const addLocation = (lat: number, lng: number) => {
+    setLocation({ latitude: lat, longitude: lng });
+  };
 
   return (
     <MapContainer
@@ -63,6 +66,9 @@ export default function Index() {
         // attribution='&copy; <a href="https://www.openstreretmap.org/copyright">OpenStreetMap</a> contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
+
+      <LocationHandler addMarker={(lat, lng) => addLocation(lat, lng)} />
+
       {sightings.map((item, index) => (
         <Marker
           key={index}
@@ -77,7 +83,14 @@ export default function Index() {
                   params: { id: item.id },
                 }}
               >
-                <Text style={{ fontWeight: "bold" }}>{item.witnessName}</Text>
+                <Text
+                  style={{
+                    fontWeight: "bold",
+                    textDecorationLine: "underline",
+                  }}
+                >
+                  {item.witnessName}
+                </Text>
               </Link>
             </View>
           </Popup>

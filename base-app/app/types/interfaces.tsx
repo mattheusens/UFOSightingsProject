@@ -1,4 +1,4 @@
-export default interface IUFOSighting {
+export interface IUFOSighting {
   id: string;
   witnessName: string;
   location: {
@@ -11,3 +11,5 @@ export default interface IUFOSighting {
   dateTime: string;
   witnessContact: string;
 }
+
+export default {};

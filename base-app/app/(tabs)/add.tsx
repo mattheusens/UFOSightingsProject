@@ -3,79 +3,30 @@ import {
   View,
   StyleSheet,
   TextInput,
-  FlatList,
-  Button,
   Pressable,
   ScrollView,
+  Image,
 } from "react-native";
-import IUFOSighting from "../types/interfaces";
+import { IUFOSighting } from "../types/interfaces.js";
 import { useContext, useState } from "react";
+import * as ImagePicker from "expo-image-picker";
 import { SightingsContext } from "../contexts/SightingsContext";
-
-const head: string[] = [
-  "Witness's name",
-  "Mail",
-  "Location",
-  "",
-  "Description",
-  "Picture",
-];
-const helpers: string[] = [
-  "Enter witness's name",
-  "Mail",
-  "Latitude",
-  "Longitude",
-  "Description",
-  "Picture",
-];
-const keys: string[] = [
-  "name",
-  "mail",
-  "locationLat",
-  "locationLong",
-  "description",
-  "picture",
-];
-
-const MakeInput = ({ index }: { index: number }) => {
-  if (helpers[index] == "Longitude")
-    return (
-      <View>
-        <TextInput
-          secureTextEntry={false}
-          placeholder={helpers[index]}
-          keyboardType="default"
-          style={[styles.textinput, styles.margins]}
-        />
-      </View>
-    );
-  return (
-    <View>
-      <Text style={[styles.text, styles.margins]}>{head[index]}*:</Text>
-      <TextInput
-        secureTextEntry={false}
-        placeholder={helpers[index]}
-        keyboardType="default"
-        style={[styles.textinput, styles.margins]}
-      />
-    </View>
-  );
-};
+import { LocationContext } from "../contexts/LocationContext";
 
 const makeNewSighting = (
   idIn: string,
   name: string,
+  location: { latitude: number; longitude: number },
   descript: string,
-  locLat: string,
-  locLon: string,
+  image: string,
   mail: string
 ) => {
   var sighting: IUFOSighting = {
     id: idIn,
     witnessName: name,
-    location: { latitude: Number(locLat), longitude: Number(locLon) },
+    location: { latitude: location.latitude, longitude: location.longitude },
     description: descript,
-    picture: "something",
+    picture: image,
     status: "unconfirmed",
     dateTime: "2020",
     witnessContact: mail,
@@ -85,11 +36,44 @@ const makeNewSighting = (
 
 export default function Add() {
   const { sightings, setSightings } = useContext(SightingsContext);
+  const { location, setLocation } = useContext(LocationContext);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [locLat, setLocLat] = useState("");
-  const [locLon, setLocLon] = useState("");
   const [mail, setMail] = useState("");
+  const [image, setImage] = useState<string>("");
+  const pickImageAsync = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      allowsEditing: true,
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      setImage(result.assets[0].uri);
+    } else {
+      alert("You did not select any image.");
+    }
+  };
+
+  const addSighting = () => {
+    setSightings([
+      ...sightings,
+      makeNewSighting(
+        (sightings.length + 1).toString(),
+        name,
+        location,
+        description,
+        image,
+        mail
+      ),
+    ]);
+    alert("Added sighting.");
+    setName("");
+    setDescription("");
+    setMail("");
+    setImage("");
+    setLocation({ latitude: 0, longitude: 0 });
+  };
 
   return (
     <View style={styles.container}>
@@ -100,6 +84,7 @@ export default function Add() {
           placeholder="Enter name"
           style={[styles.textinput, styles.margins]}
           onChangeText={setName}
+          value={name}
           maxLength={30}
         />
         <Text style={[styles.text, styles.margins]}>Description*:</Text>
@@ -108,50 +93,54 @@ export default function Add() {
           placeholder="Enter description"
           style={[styles.textinput, styles.margins]}
           onChangeText={setDescription}
+          value={description}
           maxLength={100}
         />
-        <Text style={[styles.text, styles.margins]}>Location*:</Text>
-        <TextInput
-          secureTextEntry={false}
-          placeholder="Enter latitude"
-          style={[styles.textinput, styles.margins]}
-          onChangeText={setLocLat}
-          maxLength={100}
-        />
-        <TextInput
-          secureTextEntry={false}
-          placeholder="Enter longitude"
-          style={[styles.textinput, styles.margins]}
-          onChangeText={setLocLon}
-          maxLength={100}
-        />
-        <Text style={[styles.text, styles.margins]}>Picture*:</Text>
         <Text style={[styles.text, styles.margins]}>Contact*:</Text>
         <TextInput
           secureTextEntry={false}
           placeholder="Enter mail"
           style={[styles.textinput, styles.margins]}
           onChangeText={setMail}
-          maxLength={100}
+          value={mail}
+          maxLength={40}
         />
+        <Text style={[styles.text, styles.margins]}>Location*:</Text>
+        <Text style={[styles.text, styles.margins]}>
+          Latitude: {location.latitude}
+        </Text>
+        <Text style={[styles.text, styles.margins]}>
+          Longitutde: {location.longitude}
+        </Text>
+        <Pressable style={[styles.press, styles.margins]}>
+          <Text style={styles.pressText}>Add location</Text>
+        </Pressable>
+        <Text style={[styles.text, styles.margins]}>Picture*:</Text>
+        {image != "" ? (
+          <Image
+            source={{ uri: image }}
+            style={[styles.image, styles.margins]}
+          />
+        ) : (
+          <Text style={styles.margins}>No image selected.</Text>
+        )}
 
         <Pressable
+          onPress={pickImageAsync}
+          style={[styles.press, styles.margins]}
+        >
+          <Text style={styles.pressText}>Add picture</Text>
+        </Pressable>
+
+        <Pressable
+          style={[styles.pressAdd, styles.margins]}
           onPress={() => {
-            setSightings([
-              ...sightings,
-              makeNewSighting(
-                (sightings.length + 1).toString(),
-                name,
-                description,
-                locLat,
-                locLon,
-                mail
-              ),
-            ]);
+            addSighting();
           }}
         >
-          Add sighting
+          <Text style={styles.pressText}>Add sighting</Text>
         </Pressable>
+        <Text style={styles.margins}>* = required</Text>
       </ScrollView>
     </View>
   );
@@ -172,7 +161,24 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   margins: {
-    marginTop: "2.5%",
+    marginTop: "1%",
     marginLeft: "5%",
+  },
+  press: {
+    backgroundColor: "grey",
+    width: "90%",
+  },
+  pressAdd: {
+    backgroundColor: "black",
+    width: "90%",
+  },
+  pressText: {
+    color: "white",
+    padding: ".5%",
+    alignSelf: "center",
+  },
+  image: {
+    width: 100,
+    height: 100,
   },
 });
