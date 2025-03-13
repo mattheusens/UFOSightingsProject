@@ -51,8 +51,8 @@ export default function Index() {
   return (
     <MapContainer
       center={{ lat: 51.505, lng: -0.09 }}
-      scrollWheelZoom={true}
       zoom={3}
+      scrollWheelZoom={true}
       style={{
         width: "100%",
         height: "100%",
@@ -61,6 +61,12 @@ export default function Index() {
         left: 0,
       }}
       attributionControl={false}
+      maxBounds={[
+        [-90, -180],
+        [90, 180],
+      ]}
+      maxBoundsViscosity={1.0}
+      minZoom={2.5}
     >
       <TileLayer
         // attribution='&copy; <a href="https://www.openstreretmap.org/copyright">OpenStreetMap</a> contributors'

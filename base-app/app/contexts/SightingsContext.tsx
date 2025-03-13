@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { IUFOSighting } from "../types/interfaces.js";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 interface ISightingsContext {
   sightings: IUFOSighting[];
@@ -27,13 +28,28 @@ export const SightingsProvider = ({
           "https://sampleapis.assimilate.be/ufo/sightings"
         );
         let data = await result.json();
-        setSightings(data);
+
+        const storedData = await getData();
+        if (storedData) {
+          setSightings([...data, ...storedData]);
+        } else {
+          setSightings(data);
+        }
       } catch (error) {
-        console.error("Kan API niet ophalen.");
+        console.error("Can't reach API.");
       }
     };
     fetchSightings();
   }, []);
+
+  const getData = async () => {
+    try {
+      const jsonValue = await AsyncStorage.getItem("sightings");
+      return jsonValue != null ? JSON.parse(jsonValue) : null;
+    } catch (e) {
+      alert("Couldn't get all the UFO sightings.");
+    }
+  };
 
   return (
     <SightingsContext.Provider value={{ sightings, setSightings }}>

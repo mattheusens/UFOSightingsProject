@@ -1,7 +1,7 @@
 import { Link } from "expo-router";
 import { useContext } from "react";
 import { Text, View, StyleSheet, FlatList, Dimensions } from "react-native";
-import IUFOSighting from "../types/interfaces";
+import { IUFOSighting } from "../types/interfaces";
 import { SightingsContext } from "../contexts/SightingsContext";
 
 const SightingComponent = ({ item }: { item: IUFOSighting }) => {

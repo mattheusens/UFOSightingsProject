@@ -6,15 +6,20 @@ import {
   Pressable,
   ScrollView,
   Image,
+  TouchableOpacity,
+  Button,
 } from "react-native";
 import { IUFOSighting } from "../types/interfaces.js";
-import { useContext, useState } from "react";
+import { useContext, useState, useRef } from "react";
+import { CameraView, useCameraPermissions } from "expo-camera";
 import * as ImagePicker from "expo-image-picker";
 import { SightingsContext } from "../contexts/SightingsContext";
 import { LocationContext } from "../contexts/LocationContext";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as FileSystem from "expo-file-system";
 
 const makeNewSighting = (
-  idIn: string,
+  idIn: number,
   name: string,
   location: { latitude: number; longitude: number },
   descript: string,
@@ -37,10 +42,16 @@ const makeNewSighting = (
 export default function Add() {
   const { sightings, setSightings } = useContext(SightingsContext);
   const { location, setLocation } = useContext(LocationContext);
+
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [mail, setMail] = useState("");
   const [image, setImage] = useState<string>("");
+
+  const ref = useRef<CameraView>(null);
+  const [permission, requestPermission] = useCameraPermissions();
+  const [wantPicture, setWantPicture] = useState<Boolean>(false);
+
   const pickImageAsync = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ["images"],
@@ -55,18 +66,49 @@ export default function Add() {
     }
   };
 
-  const addSighting = () => {
-    setSightings([
-      ...sightings,
-      makeNewSighting(
-        (sightings.length + 1).toString(),
-        name,
-        location,
-        description,
-        image,
-        mail
-      ),
-    ]);
+  const downloadImage = async (imageUrl: string) => {
+    try {
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "ufo_sighting.jpg";
+      document.body.appendChild(link);
+      link.click();
+
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Fout bij downloaden:", error);
+    }
+  };
+
+  const takePictureAsync = async () => {
+    const photo = await ref.current?.takePictureAsync();
+    setImage(photo?.uri ?? "");
+    console.log(photo?.uri);
+    setWantPicture(false);
+
+    if (photo) {
+      downloadImage(photo.uri);
+    }
+  };
+
+  const addSighting = async () => {
+    var newSighting: IUFOSighting = makeNewSighting(
+      sightings.length + 1,
+      name,
+      location,
+      description,
+      image,
+      mail
+    );
+
+    setSightings([...sightings, newSighting]);
+    await storeData(newSighting);
+
     alert("Added sighting.");
     setName("");
     setDescription("");
@@ -74,6 +116,31 @@ export default function Add() {
     setImage("");
     setLocation({ latitude: 0, longitude: 0 });
   };
+
+  const storeData = async (newSighting: IUFOSighting) => {
+    try {
+      const jsonValueOut = await AsyncStorage.getItem("sightings");
+      const jsonValue = jsonValueOut ? JSON.parse(jsonValueOut) : [];
+
+      jsonValue.push(newSighting);
+
+      await AsyncStorage.setItem("sightings", JSON.stringify(jsonValue));
+    } catch (e) {
+      alert("Your sighting is only temporary.");
+    }
+  };
+
+  if (permission?.granted && wantPicture) {
+    return (
+      <View style={styles.container}>
+        <CameraView ref={ref} style={styles.camera} facing={"front"}>
+          <Pressable onPress={takePictureAsync} style={styles.buttonCamera}>
+            <Text style={styles.buttonCameraText}>Take picture</Text>
+          </Pressable>
+        </CameraView>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -113,7 +180,7 @@ export default function Add() {
           Longitutde: {location.longitude}
         </Text>
         <Pressable style={[styles.press, styles.margins]}>
-          <Text style={styles.pressText}>Add location</Text>
+          <Text style={styles.pressText}>Pick location on the map</Text>
         </Pressable>
         <Text style={[styles.text, styles.margins]}>Picture*:</Text>
         {image != "" ? (
@@ -129,7 +196,16 @@ export default function Add() {
           onPress={pickImageAsync}
           style={[styles.press, styles.margins]}
         >
-          <Text style={styles.pressText}>Add picture</Text>
+          <Text style={styles.pressText}>Choose image</Text>
+        </Pressable>
+        <Pressable
+          onPress={() => {
+            requestPermission();
+            setWantPicture(true);
+          }}
+          style={[styles.press, styles.margins]}
+        >
+          <Text style={styles.pressText}>Take picture</Text>
         </Pressable>
 
         <Pressable
@@ -180,5 +256,21 @@ const styles = StyleSheet.create({
   image: {
     width: 100,
     height: 100,
+  },
+  camera: {
+    flex: 1,
+  },
+  buttonCamera: {
+    backgroundColor: "white",
+    width: 110,
+    height: 40,
+    borderRadius: "2rem",
+    margin: "auto",
+    marginBottom: 30,
+  },
+  buttonCameraText: {
+    fontSize: 18,
+    marginTop: 7,
+    marginLeft: 7,
   },
 });

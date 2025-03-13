@@ -4,7 +4,7 @@ import { View, Text, Image, StyleSheet } from "react-native";
 import { IUFOSighting } from "../types/interfaces";
 import { useContext, useEffect } from "react";
 import { SightingsContext } from "../contexts/SightingsContext";
-import { useNavigation } from "expo-router";
+import { useNavigation, useRouter } from "expo-router";
 
 const head: string[] = [
   "Witness's name:",
@@ -59,15 +59,18 @@ export default function listId() {
   const nav = useNavigation();
 
   useEffect(() => {
-    nav.setOptions({ title: `UFO Sighting ${sightings[index].witnessName}` });
+    nav.setOptions({
+      title: `UFO Sighting ${sightings[index - 1].witnessName}`,
+    });
   }, [index, nav]);
 
-  if (isNaN(index) || index < 0 || index > sightings.length)
+  if (isNaN(index) || index <= 0 || index > sightings.length) {
     return (
       <View>
         <Text>Not a valid id!</Text>
       </View>
     );
+  }
 
   return (
     <View>

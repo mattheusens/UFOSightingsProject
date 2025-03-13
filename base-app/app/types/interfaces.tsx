@@ -1,5 +1,5 @@
 export interface IUFOSighting {
-  id: string;
+  id: number;
   witnessName: string;
   location: {
     latitude: number;
