@@ -6,8 +6,6 @@ import {
   Pressable,
   ScrollView,
   Image,
-  TouchableOpacity,
-  Button,
 } from "react-native";
 import { IUFOSighting } from "../types/interfaces.js";
 import { useContext, useState, useRef } from "react";
@@ -16,7 +14,6 @@ import * as ImagePicker from "expo-image-picker";
 import { SightingsContext } from "../contexts/SightingsContext";
 import { LocationContext } from "../contexts/LocationContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as FileSystem from "expo-file-system";
 
 const makeNewSighting = (
   idIn: number,
@@ -24,8 +21,31 @@ const makeNewSighting = (
   location: { latitude: number; longitude: number },
   descript: string,
   image: string,
-  mail: string
+  mail: string,
+  date: string,
+  tries: number
 ) => {
+  if (tries < 1 && (location.latitude == 0 || location.longitude == 0)) {
+    alert("Are you sure this is the right location?");
+    return "location";
+  }
+
+  const regex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  if (!regex.test(mail)) {
+    alert("Not a valid email!");
+    return "email";
+  }
+
+  if (new Date(date) > new Date()) {
+    alert("Date can't be in the future!");
+    return "date";
+  }
+
+  if (name == "" || descript == "" || mail == "" || image == "") {
+    alert("Required fields must be filled in!");
+    return "required";
+  }
+
   var sighting: IUFOSighting = {
     id: idIn,
     witnessName: name,
@@ -33,7 +53,7 @@ const makeNewSighting = (
     description: descript,
     picture: image,
     status: "unconfirmed",
-    dateTime: "2020",
+    dateTime: new Date(date + "T00:00:00").toISOString(),
     witnessContact: mail,
   };
   return sighting;
@@ -46,7 +66,9 @@ export default function Add() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [mail, setMail] = useState("");
+  const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [image, setImage] = useState<string>("");
+  const [tries, setTries] = useState(0);
 
   const ref = useRef<CameraView>(null);
   const [permission, requestPermission] = useCameraPermissions();
@@ -97,14 +119,25 @@ export default function Add() {
   };
 
   const addSighting = async () => {
-    var newSighting: IUFOSighting = makeNewSighting(
+    var newSighting: IUFOSighting | string = makeNewSighting(
       sightings.length + 1,
       name,
       location,
       description,
       image,
-      mail
+      mail,
+      date,
+      tries
     );
+
+    if (typeof newSighting === "string") {
+      if (newSighting === "location") {
+        setTries(tries + 1);
+      }
+      return;
+    }
+
+    setTries(0);
 
     setSightings([...sightings, newSighting]);
     await storeData(newSighting);
@@ -113,8 +146,9 @@ export default function Add() {
     setName("");
     setDescription("");
     setMail("");
-    setImage("");
+    setDate(new Date().toISOString().split("T")[0]);
     setLocation({ latitude: 0, longitude: 0 });
+    setImage("");
   };
 
   const storeData = async (newSighting: IUFOSighting) => {
@@ -172,16 +206,24 @@ export default function Add() {
           value={mail}
           maxLength={40}
         />
-        <Text style={[styles.text, styles.margins]}>Location*:</Text>
+        <Text style={[styles.text, styles.margins]}>Date*:</Text>
+        <input
+          type="date"
+          value={date}
+          style={{ ...styles.dateinput, ...styles.margins }}
+          onChange={(e) => {
+            setDate(e.target.value);
+          }}
+        />
         <Text style={[styles.text, styles.margins]}>
+          Location (click on the map):
+        </Text>
+        <Text style={[styles.text, styles.marginsExtra]}>
           Latitude: {location.latitude}
         </Text>
-        <Text style={[styles.text, styles.margins]}>
+        <Text style={[styles.text, styles.marginsExtra]}>
           Longitutde: {location.longitude}
         </Text>
-        <Pressable style={[styles.press, styles.margins]}>
-          <Text style={styles.pressText}>Pick location on the map</Text>
-        </Pressable>
         <Text style={[styles.text, styles.margins]}>Picture*:</Text>
         {image != "" ? (
           <Image
@@ -192,22 +234,24 @@ export default function Add() {
           <Text style={styles.margins}>No image selected.</Text>
         )}
 
-        <Pressable
-          onPress={pickImageAsync}
-          style={[styles.press, styles.margins]}
-        >
-          <Text style={styles.pressText}>Choose image</Text>
-        </Pressable>
-        <Pressable
-          onPress={() => {
-            requestPermission();
-            setWantPicture(true);
-          }}
-          style={[styles.press, styles.margins]}
-        >
-          <Text style={styles.pressText}>Take picture</Text>
-        </Pressable>
+        <View style={styles.pressContainer}>
+          <Pressable
+            onPress={pickImageAsync}
+            style={[styles.press, styles.margins]}
+          >
+            <Text style={styles.pressText}>Choose image</Text>
+          </Pressable>
 
+          <Pressable
+            onPress={() => {
+              requestPermission();
+              setWantPicture(true);
+            }}
+            style={[styles.press, styles.margins]}
+          >
+            <Text style={styles.pressText}>Take picture</Text>
+          </Pressable>
+        </View>
         <Pressable
           style={[styles.pressAdd, styles.margins]}
           onPress={() => {
@@ -233,6 +277,15 @@ const styles = StyleSheet.create({
     borderColor: "black",
     backgroundColor: "white",
     width: "90%",
+    height: 30,
+    paddingLeft: "2%",
+    borderWidth: 1,
+  },
+  dateinput: {
+    borderColor: "black",
+    backgroundColor: "white",
+    width: "87.9%",
+    height: 30,
     paddingLeft: "2%",
     borderWidth: 1,
   },
@@ -240,9 +293,17 @@ const styles = StyleSheet.create({
     marginTop: "1%",
     marginLeft: "5%",
   },
+  marginsExtra: {
+    marginTop: "1%",
+    marginLeft: "7%",
+  },
+  pressContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
   press: {
     backgroundColor: "grey",
-    width: "90%",
+    width: "42.5%",
   },
   pressAdd: {
     backgroundColor: "black",
@@ -250,8 +311,9 @@ const styles = StyleSheet.create({
   },
   pressText: {
     color: "white",
-    padding: ".5%",
-    alignSelf: "center",
+    height: 40,
+    alignContent: "center",
+    margin: "auto",
   },
   image: {
     width: 100,

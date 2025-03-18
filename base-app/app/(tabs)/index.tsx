@@ -1,7 +1,7 @@
 "use dom";
 
 import "leaflet/dist/leaflet.css";
-import L, { LatLngTuple } from "leaflet";
+import L from "leaflet";
 import { View, Text, StyleSheet } from "react-native";
 import { useContext } from "react";
 import { SightingsContext } from "../contexts/SightingsContext";
@@ -10,7 +10,6 @@ import {
   MapContainer,
   Marker,
   Popup,
-  SVGOverlay,
   TileLayer,
   useMap,
   useMapEvents,
@@ -61,16 +60,15 @@ export default function Index() {
         left: 0,
       }}
       attributionControl={false}
-      maxBounds={[
-        [-90, -180],
-        [90, 180],
-      ]}
+      maxBounds={L.latLngBounds([-90, -180], [90, 180])}
       maxBoundsViscosity={1.0}
-      minZoom={2.5}
+      minZoom={3}
     >
       <TileLayer
         // attribution='&copy; <a href="https://www.openstreretmap.org/copyright">OpenStreetMap</a> contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        noWrap={true}
+        bounds={L.latLngBounds([-90, -180], [90, 180])}
       />
 
       <LocationHandler addMarker={(lat, lng) => addLocation(lat, lng)} />

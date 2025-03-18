@@ -36,7 +36,9 @@ export const SightingsProvider = ({
           setSightings(data);
         }
       } catch (error) {
-        console.error("Can't reach API.");
+        const storedData = await getData();
+        setSightings(storedData);
+        alert("Can't reach API.");
       }
     };
     fetchSightings();

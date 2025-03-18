@@ -1,10 +1,10 @@
 import { useLocalSearchParams } from "expo-router";
-import React from "react";
+import React, { useState } from "react";
 import { View, Text, Image, StyleSheet } from "react-native";
 import { IUFOSighting } from "../types/interfaces";
 import { useContext, useEffect } from "react";
 import { SightingsContext } from "../contexts/SightingsContext";
-import { useNavigation, useRouter } from "expo-router";
+import { useNavigation } from "expo-router";
 
 const head: string[] = [
   "Witness's name:",
@@ -28,6 +28,16 @@ const ListMaker = ({ item }: { item: IUFOSighting }) => {
       <Text style={styles.headprop}>
         <Text style={styles.childprop}>Witness's contact: </Text>
         {item.witnessContact}
+      </Text>
+      <Text style={styles.headprop}>
+        <Text style={styles.childprop}>Date: </Text>
+        {new Date(item.dateTime)
+          .toLocaleDateString("nl-NL", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+          })
+          .replace(/-/g, "/")}
       </Text>
       <Text style={styles.fullprop}>Location:</Text>
       <Text>
@@ -58,13 +68,18 @@ export default function listId() {
   const index = Number(id);
   const nav = useNavigation();
 
+  const [sighting, setSighting] = useState<IUFOSighting | null>(null);
+
   useEffect(() => {
+    const foundSighting = sightings.find((s) => s.id === index);
+    setSighting(foundSighting || null);
+
     nav.setOptions({
-      title: `UFO Sighting ${sightings[index - 1].witnessName}`,
+      title: `UFO Sighting ${foundSighting?.witnessName}`,
     });
   }, [index, nav]);
 
-  if (isNaN(index) || index <= 0 || index > sightings.length) {
+  if (isNaN(index) || sighting == null) {
     return (
       <View>
         <Text>Not a valid id!</Text>
@@ -74,7 +89,7 @@ export default function listId() {
 
   return (
     <View>
-      <ListMaker item={sightings[index - 1]} />
+      <ListMaker item={sighting} />
     </View>
   );
 }
