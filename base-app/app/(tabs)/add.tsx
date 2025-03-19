@@ -222,7 +222,7 @@ export default function Add() {
           Latitude: {location.latitude}
         </Text>
         <Text style={[styles.text, styles.marginsExtra]}>
-          Longitutde: {location.longitude}
+          Longitude: {location.longitude}
         </Text>
         <Text style={[styles.text, styles.margins]}>Picture*:</Text>
         {image != "" ? (

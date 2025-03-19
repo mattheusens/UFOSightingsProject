@@ -14,9 +14,11 @@ const SightingComponent = ({ item }: { item: IUFOSighting }) => {
             params: { id: item.id },
           }}
         >
-          <Text style={{ fontWeight: "bold" }}>{item.witnessName}: </Text>"
-          {item.description}"{" "}
+          <Text style={{ fontWeight: "bold", textDecorationLine: "underline" }}>
+            {item.witnessName}:
+          </Text>
         </Link>
+        <Text> "{item.description}" </Text>
       </Text>
     </View>
   );

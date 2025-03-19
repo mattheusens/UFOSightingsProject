@@ -44,7 +44,10 @@ export default function Index() {
   });
 
   const addLocation = (lat: number, lng: number) => {
-    setLocation({ latitude: lat, longitude: lng });
+    setLocation({
+      latitude: parseFloat(lat.toFixed(6)),
+      longitude: parseFloat(lng.toFixed(6)),
+    });
   };
 
   return (
@@ -86,6 +89,7 @@ export default function Index() {
                   pathname: "/list/[id]",
                   params: { id: item.id },
                 }}
+                style={{ color: "black" }}
               >
                 <Text
                   style={{
@@ -93,9 +97,10 @@ export default function Index() {
                     textDecorationLine: "underline",
                   }}
                 >
-                  {item.witnessName}
+                  {item.witnessName}:
                 </Text>
               </Link>
+              <Text>{item.description}</Text>
             </View>
           </Popup>
         </Marker>
